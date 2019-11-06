@@ -5,14 +5,16 @@ import lattice
 class Dataset:
     
     def __init__(self, df):
-        self.data = np.array([])       # (numpy matrix): Dataset with all values changed to integers
-        self.dic = []                  # (list of list): Dictionaries for hierarchies
-        self.hier = []                 # (list of np.array): Hierarchy matrices
-        self.lat = None                # (Lattice object): Lattice graph
+        self.data = np.array([])            # (numpy matrix): Dataset with all values changed to integers
+        self.dic = []                       # (list of list): Dictionaries for hierarchies
+        self.hier = []                      # (list of np.array): Hierarchy matrices
+        self.lat = None                     # (Lattice object): Lattice graph
         self.__DFtoInt(df)
-        self.n_qid = len(self.data[0]) # (int): Number of attributes
-            
-    def buildLattice(self, hierarchies):
+        self.n_qid = len(self.data[0])      # (int): Number of attributes
+        self.bufferData = self.data.copy()
+        self.oldLevels = [0] * self.n_qid    # (list of int): Current hierarchies levels of buffer
+
+    def createLattice(self, hierarchies):
         self.lat = lattice.Lattice(self.n_qid, hierarchies)
 
     def addHierarchy(self, att, values, newNames):
@@ -64,3 +66,21 @@ class Dataset:
             
             # Add a column in the hierarchy matrix
             self.hier.append(np.array([[i] for i in np.arange(len(U))]))
+
+    def changeData(self, levels):
+        """
+            @Paramaters:
+                levels: list of hierarchies levels to change buffer
+        """
+
+        # Discard columns that are in the same level as the previous buffer
+        levelsCopy = levels.copy()
+        for i in np.arange(len(levels)-1, -1, -1):
+            if self.oldLevels[i] == levelsCopy[i]:
+                del levelsCopy[i]
+
+        for row in np.arange(self.buffer.shape[0]):
+            for col in levelsCopy:
+                self.buffer[row][col] = self.hier[col][data[row][col]][level[col]]
+
+        self.oldLevels = levels.copy()

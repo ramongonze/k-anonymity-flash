@@ -3,27 +3,80 @@ import sys
 
 class Lattice:
 	def __init__(self, n_qid, hierarchies):
-		self.n_qid = n_qid					   # Number of QID
-		self.hierarchies = hierarchies[:]  # Vector where position i containts the taxonomy tree hight of attribute i
-		self.adj = {}						   # Adjacent list (graph)
-		self.__createLattice()				   # Create the graph
-
-	def __addEdges(self, curVertex):
-		curVertexModified = curVertex[:]
-		self.adj[tuple(curVertex)] = []
-		for i in np.arange(self.n_qid):
-			if curVertex[i] < self.hierarchies[i]:
-				curVertexModified[i] += 1
-				self.adj[tuple(curVertex)].append(tuple(curVertexModified))
+		self.n_qid = n_qid				  # Number of QID
+		self.hierarchies = hierarchies[:] # Vector where position i containts the taxonomy tree hight of attribute i
 		
-				if tuple(curVertexModified) not in self.adj:
-					self.__addEdges(curVertexModified)
-				curVertexModified[i] -= 1
+	def successors(node):
+		"""
+			Produces a set of sucessor nodes of node given in the first parameter.
+			
+			@Parameters:
+				node: list of integers
+				hierarchies: list where position i is the taxonomy tree hight of attribute i
+				
+			@Return:
+				nodes: set of tuples
+		"""
+		
+		nodes = set()
+		node = list(node)
+		for i in np.arange(len(node)):
+			if node[i] < self.hierarchies[i]:
+				node[i] += 1
+				nodes.add(tuple(node))
+				node[i] -= 1
+		return nodes
 
-	def __createLattice(self):
-		n_nodes = 1
-		for hight in self.hierarchies:
-			n_nodes *= (hight+1)
+	def genSuccessors(node):
+		"""
+			It is a generator that produces a list of successors of a node.
+			
+			@Parameters:
+				node: list of integers
+				hierarchies: list where position i is the taxonomy tree hight of attribute i
+		"""
+		
+		node = list(node)
+		for i in np.arange(len(node)):
+			if node[i] < self.hierarchies[i]:
+				node[i] += 1
+				yield tuple(node)
+				node[i] -= 1
 
-		sys.setrecursionlimit(max(n_nodes, 10**4))
-		self.__addEdges([0] * self.n_qid) # Initial state = [0, ..., 0]
+	def nextLevel(nodes):
+		"""
+			Given a set of nodes in the lattice level L, this function is a generator
+			that produces a set of nodes in the level L+1.
+			
+			@Parameters:
+				nodes: list of nodes in the current level
+				hierarchies: list where position i is the taxonomy tree hight of attribute i
+		"""
+		
+		nextLevel = set()
+		for node in nodes:
+			nextLevel.add(successors(node))
+		
+		return nextLevel
+
+	def findPath(node, taggedNodes):
+		"""
+			It produces a path of untagged nodes.
+			
+			@Parameters:
+				node: tuple of integers
+				taggedNodes: set of nodes
+				
+			@Return:
+				path: list of nodes
+		"""
+		
+		path = []
+		while len(path) == 0 or path[-1] != node:
+			path.append(node)
+			for up in genSuccessors(node):
+				if up not in taggedNodes:
+					node = up
+					break
+					
+		return path
