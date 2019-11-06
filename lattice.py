@@ -3,14 +3,14 @@ import sys
 
 class Lattice:
 	def __init__(self, n_qid, hierarchies):
-		self.n_qid = n_qid				# Number of QID
-		self.hierarchies = hierarchies  # Vector where position i containts the taxonomy tree hight of attribute i
-		self.adj = {}					# Adjacent list (graph)
-		self.__createLattice()			# Create the graph
+		self.n_qid = n_qid					   # Number of QID
+		self.hierarchies = hierarchies[:]  # Vector where position i containts the taxonomy tree hight of attribute i
+		self.adj = {}						   # Adjacent list (graph)
+		self.__createLattice()				   # Create the graph
 
 	def __addEdges(self, curVertex):
+		curVertexModified = curVertex[:]
 		self.adj[tuple(curVertex)] = []
-		curVertexModified = curVertex.copy()
 		for i in np.arange(self.n_qid):
 			if curVertex[i] < self.hierarchies[i]:
 				curVertexModified[i] += 1
