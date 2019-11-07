@@ -5,44 +5,19 @@ import lattice
 class Dataset:
     
     def __init__(self, df):
-        self.data = np.array([])            # (numpy matrix): Dataset with all values changed to integers
-        self.dic = []                       # (list of list): Dictionaries for hierarchies
-        self.hier = []                      # (list of np.array): Hierarchy matrices
-        self.lat = None                     # (Lattice object): Lattice graph
+        self.data = np.array([])                # (numpy matrix): Dataset with all values changed to integers
+        self.n_qid = df.shape[1]                # (int): Number of attributes
+        self.lat = lattice.Lattice(self.n_qid)  # (Lattice object): Lattice graph
         self.__DFtoInt(df)
-        self.n_qid = len(self.data[0])      # (int): Number of attributes
-        self.bufferData = self.data.copy()
-        self.oldLevels = [0] * self.n_qid    # (list of int): Current hierarchies levels of buffer
-
-    def createLattice(self, hierarchies):
-        self.lat = lattice.Lattice(self.n_qid, hierarchies)
-
-    def addHierarchy(self, att, values, newNames):
-        """
-            Add a column in 'att' hierarchy matrix and the new hierarchy names in 
-            'att' dictionary.
-            
-            @Parameters
-                att (int): attribute's index.
-                values (dict): dictionary associating values from the current hierarchy level
-                               to the hierarchy level+1. Obs: The association is int to int.
-                newNames (list): list of new names in the hierarchy.
-        """
-        
-        # Update hierarchy matrix
-        f = np.vectorize(lambda x : values[x])
-        newColumn = f(self.hier[att][:,-1])
-        self.hier[att] = np.c_[self.hier[att], newColumn]
-        
-        # Update dictionary
-        self.dic[att].append(newNames)
+        self.buffer = self.data.copy()          # (numpy matrix): Buffer used when changing the original dataset with different hiearchies levels
+        self.oldLevels = [0] * self.n_qid       # (list of int): Current hierarchies levels of buffer
     
     def __DFtoInt(self, df):
         """
             Replace all values in the dataset by integers. It also creates a dictionary
             to keep the relation between the old values and the new integer values.
-            Saves the new dataset in the attribute 'self.data' and the dictionary in the
-            attribute 'self.dic'.
+            It saves the new dataset in the attribute 'self.data' and the dictionary in the
+            attribute 'self.lat.dic'.
         """
         
         f = np.vectorize(lambda x: dic[x])
@@ -62,10 +37,13 @@ class Dataset:
                 self.data = np.c_[self.data, f(df.iloc[:,col])]
 
             # Link column and integer dictionary
-            self.dic.append(U)
+            self.lat.dic.append(U)
             
             # Add a column in the hierarchy matrix
-            self.hier.append(np.array([[i] for i in np.arange(len(U))]))
+            self.lat.hier.append(np.array([[i] for i in np.arange(len(U))]))
+
+            # Add the number of distinct values in level 0 of generalization
+            self.lat.distinct.append([len(U)])
 
     def changeData(self, levels):
         """
@@ -81,6 +59,6 @@ class Dataset:
 
         for row in np.arange(self.buffer.shape[0]):
             for col in levelsCopy:
-                self.buffer[row][col] = self.hier[col][data[row][col]][level[col]]
+                self.buffer[row][col] = self.lat.hier[col][data[row][col]][levels[col]]
 
         self.oldLevels = levels.copy()
