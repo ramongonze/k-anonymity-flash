@@ -5,8 +5,8 @@ from heapq import heapify, heappop, heappush
 
 class Lattice:
 	def __init__(self, n_qid):
-		self.n_qid = n_qid	  			# Number of QID
-		self.hierarchies = [0] * n_qid	# List where position i containts the taxonomy tree hight of attribute i
+		self.n_qid = n_qid	  			# (int): Number of QID
+		self.hierarchies = [0] * n_qid	# (list): List where position i containts the taxonomy tree hight of attribute i
 		self.dic = []		  			# (list of list): Dictionaries for hierarchies
 		self.hier = []		  			# (list of np.array): Hierarchy matrices
 		self.distinct = []				# (numpy matrix): Position i,j is the number of distinct values of
@@ -39,40 +39,26 @@ class Lattice:
 
 	def successors(node):
 		"""
-			Produces a set of sucessor nodes of node given in the first parameter.
+			Produces a list of successors of a node.
 			
 			@Parameters:
-				node: list of integers
-				hierarchies: list where position i is the taxonomy tree hight of attribute i
+				node: tuple of integers
 				
 			@Return:
-				nodes: set of tuples
+				nodes: list of tuples
 		"""
 		
-		nodes = set()
+		nodes = []
 		node = list(node)
 		for i in np.arange(len(node)):
 			if node[i] < self.hierarchies[i]:
 				node[i] += 1
-				nodes.add(tuple(node))
+				nodes.append((nodeMetrics(node), tuple(node)))
 				node[i] -= 1
-		return nodes
+		
+		nodes.sort()
 
-	def genSuccessors(node):
-		"""
-			It is a generator that produces a list of successors of a node.
-			
-			@Parameters:
-				node: list of integers
-				hierarchies: list where position i is the taxonomy tree hight of attribute i
-		"""
-		
-		node = list(node)
-		for i in np.arange(len(node)):
-			if node[i] < self.hierarchies[i]:
-				node[i] += 1
-				yield tuple(node)
-				node[i] -= 1
+		return [t[1] for t in nodes]
 
 	def nextLevel(nodes):
 		"""
@@ -86,9 +72,20 @@ class Lattice:
 		
 		nextLevel = set()
 		for node in nodes:
-			nextLevel.add(successors(node))
+
+			# Look for node successors
+			node = list(node)
+			for i in np.arange(len(node)):
+				if node[i] < self.hierarchies[i]:
+					node[i] += 1
+					nextLevel.add(tuple(node))
+					node[i] -= 1
 		
-		return nextLevel
+		# Sort nodes according to metrics c1, c2 and c3
+		nodeM = [(nodeMetrics(node), node) for node in nextLevel]
+		nodeM.sort()
+
+		return [t[1] for t in nodeM]
 
 	def findPath(node, taggedNodes):
 		"""
@@ -105,7 +102,7 @@ class Lattice:
 		path = []
 		while len(path) == 0 or path[-1] != node:
 			path.append(node)
-			for up in genSuccessors(node):
+			for up in successors(node):
 				if up not in taggedNodes:
 					node = up
 					break
@@ -121,15 +118,15 @@ class Lattice:
 			mid = floor((low+high)/2)
 			node = path[mid]
 			# if checkAndTag(node):
-			# 	optimum = node
-			# 	high = mid-1
-			# else:
-			# 	heap.add(node)
-			# 	low = mid+1
+				optimum = node
+				high = mid-1
+			else:
+				heapq.heappush(heap, node)
+				low = mid+1
 
 		# store(optimum)
 
-	def c(self, n):
+	def nodeMetrics(self, n):
 		"""
 			Calculates metrics to sort lattice nodes.
 
@@ -141,7 +138,7 @@ class Lattice:
 				n: tuple that represents a node in a lattice
 			
 			@Return:
-				Vector [c1, c2, c3]
+				Tuple (c1, c2, c3)
 		"""
 
 		c1 = sum(n) 
@@ -154,4 +151,4 @@ class Lattice:
 		c2 = sC1/self.n_qid
 		c3 = 1 - (sC2/self.n_qid)
 
-		return np.array([c1, c2, c3])
+		return (c1, c2, c3)
