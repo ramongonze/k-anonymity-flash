@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 import lattice
-from math import log2, ceiling
+from math import log2, ceil
 
 class Dataset:
 	
@@ -53,13 +52,13 @@ class Dataset:
 		"""
 
 		# Discard columns that are in the same level as the previous buffer
-		levelsCopy = levels.copy()
+		indexes = []
 		for i in np.arange(len(levels)-1, -1, -1):
-			if self.oldLevels[i] == levelsCopy[i]:
-				del levelsCopy[i]
+			if self.oldLevels[i] != levels[i]:
+				indexes.append(i)
 
 		for row in np.arange(self.buffer.shape[0]):
-			for col in levelsCopy:
+			for col in indexes:
 				self.buffer[row][col] = self.lat.hier[col][data[row][col]][levels[col]]
 
 		self.oldLevels = levels.copy()

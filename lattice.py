@@ -10,7 +10,7 @@ class Lattice:
 		self.dic = []		  			# (list of list): Dictionaries for hierarchies
 		self.hier = []		  			# (list of np.array): Hierarchy matrices
 		self.distinct = []				# (numpy matrix): Position i,j is the number of distinct values of
-										# 				  attribute i in the level of generalization j
+										#				  attribute i in the level of generalization j
 	def addNewHierarchy(self, att, values, newNames):
 		"""
 			Add a column in 'att' hierarchy matrix and the new hierarchy names in 
@@ -37,9 +37,9 @@ class Lattice:
 		# Add the number of distinct values in the new hierarchy
 		self.distinct[att].append(len(newNames))
 
-	def successors(node):
+	def sortedSuccessors(self, node):
 		"""
-			Produces a list of successors of a node.
+			Produces a list of sorted (by metrics c1,c2 and c3) successors of a node.
 			
 			@Parameters:
 				node: tuple of integers
@@ -60,19 +60,55 @@ class Lattice:
 
 		return [t[1] for t in nodes]
 
-	def nextLevel(nodes):
+	def successors(self, node):
+		"""
+			Produces a list of successors of a node.
+			
+			@Parameters:
+				node: tuple of integers
+				
+			@Return:
+				nodes: list of tuples
+		"""
+		
+		nodes = []
+		node = list(node)
+		for i in np.arange(len(node)):
+			if node[i] < self.hierarchies[i]:
+				node[i] += 1
+				nodes.append(tuple(node))
+				node[i] -= 1
+		
+		return nodes
+
+	def predecessors(node):
+		"""
+			Produces a list of predecessors of a node
+
+			@Parameters: 
+				node: tuple of integers
+		"""
+		nodes = []
+		node = list(node)
+		for i in np.arange(len(node)):
+			if node[i] > 0:
+				node[i] -= 1
+				nodes.append(tuple(node))
+				node[i] += 1
+
+		return nodes
+
+	def nextLevel(self, nodes):
 		"""
 			Given a set of nodes in the lattice level L, this function is a generator
 			that produces a set of nodes in the level L+1.
 			
 			@Parameters:
 				nodes: list of nodes in the current level
-				hierarchies: list where position i is the taxonomy tree hight of attribute i
 		"""
 		
 		nextLevel = set()
 		for node in nodes:
-
 			# Look for node successors
 			node = list(node)
 			for i in np.arange(len(node)):
@@ -86,45 +122,6 @@ class Lattice:
 		nodeM.sort()
 
 		return [t[1] for t in nodeM]
-
-	def findPath(node, taggedNodes):
-		"""
-			It produces a path of untagged nodes.
-			
-			@Parameters:
-				node: tuple of integers
-				taggedNodes: set of nodes
-				
-			@Return:
-				path: list of nodes
-		"""
-		
-		path = []
-		while len(path) == 0 or path[-1] != node:
-			path.append(node)
-			for up in successors(node):
-				if up not in taggedNodes:
-					node = up
-					break
-					
-		return path
-
-	def checkPath(path, heap):
-		low = 0
-		high = len(path)-1
-		optimum = None
-
-		while low <= high:
-			mid = floor((low+high)/2)
-			node = path[mid]
-			# if checkAndTag(node):
-				optimum = node
-				high = mid-1
-			else:
-				heapq.heappush(heap, node)
-				low = mid+1
-
-		# store(optimum)
 
 	def nodeMetrics(self, n):
 		"""
