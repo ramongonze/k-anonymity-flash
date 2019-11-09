@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import lattice
 from math import log2, ceil
 

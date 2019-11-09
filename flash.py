@@ -1,4 +1,5 @@
 import dataset
+import numpy as np
 
 def findPath(D, node, taggedNodes):
 	"""
@@ -48,7 +49,7 @@ def checkAndTag(node, k, D, taggedNodes):
 
 	return anonymous
 	
-def checkPath(path, heap, k, D):
+def checkPath(path, heap, k, D, optimums):
 	"""
 		@Parameters:
 			path: list of nodes
@@ -72,6 +73,7 @@ def checkPath(path, heap, k, D):
 			low = mid+1
 
 	# store(optimum)
+	optimums.append(optimum)
 
 def flash(D, k):
 	"""
@@ -80,6 +82,7 @@ def flash(D, k):
 			k: parameter of k-anonymity
 	"""
 
+	optimums = []
 	taggedNodes = set()
 	latticeHeight = sum(D.lat.hierarchies)
 	currLevel = [tuple([0]*D.n_qid)] # There is only the node (0,...,0) at level 0
@@ -88,12 +91,14 @@ def flash(D, k):
 		for node in currLevel:
 			if node not in taggedNodes:
 				path = findPath(D, node, taggedNodes)
-				checkPath(path, heap, k, D)
+				checkPath(path, heap, k, D, optimums)
 				while len(heap) > 0:
 					node = heapq.heappop(heap)
 					for up in D.lat.sortedSuccessors(node):
 						if up not in taggedNodes:
 							path = D.lat.findPath(up)
-							checkPath(path, heap, k, D)
+							checkPath(path, heap, k, D, optimums)
 		
 		currLevel = D.lat.nextLevel(currLevel)
+
+	return optimums
