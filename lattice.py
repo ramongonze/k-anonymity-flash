@@ -12,12 +12,26 @@ class Lattice:
 		self.distinct = []				# (numpy matrix): Position i,j is the number of distinct values of
 										#				  attribute i in the level of generalization j
 	
-	def createNumericalHierarchies(minInterval, maxInterval, h):
+	# Binary search
+	def bSearch(self, arr, key):
+		i, j = 0, len(arr)-1
+		while i <= j:
+			m = (i+j)//2
+			if key <= arr[m]:
+				j = m-1
+			else:
+				i = m+1
+		if i == 0 and arr[0] > key:
+			return None
+		return i
+
+
+	def createNumericalHierarchies(self, att, h):
 		"""
 			Given an interval this function produces a taxonomy tree.
 
 			@Parameters:
-				interval: list of numbers (column of Dataset.data)
+				att (int): Attribute index
 				h: Desired taxonomy tree height. h >= 2
 
 			@Return:
@@ -26,30 +40,40 @@ class Lattice:
 		"""
 
 		dic = {}
-		intervals = [(minInterval,(minInterval+maxInterval)//2,maxInterval)] # Initial interval: Entire range of values
-		nextLevel = maxInterval + 2**(h-1) -2
+		Min, Max = self.dic[att][0], self.dic[att][-1] # Interval bounds
+		intervals = [(Min,(Min+Max)//2,Max)] # Initial interval: Entire range of values
+		nextLevel = len(self.dic[att])-1 + 2**(h-1) -2
 		dic = ['*']
-		hierarchies = np.array([[nextLevel+1]]*(maxInterval-minInterval+1))
+		hierarchies = np.array([[nextLevel+1]]*len(self.dic[att]))
 		for _ in np.arange(h-2):
 			newH, nextIntervals = [], []
 			while len(intervals) > 0:
 				it = intervals.pop(0) # Extract the first element
 				
 				# Add the new 2 levels in the dictionary
-				if it[2] == maxInterval:
+				if it[2] == Max:
 					dic.append('[%.2f, %.2f]'%(it[1], it[2]))
 				else:
 					dic.append('[%.2f, %.2f)'%(it[1], it[2]))
 				dic.append('[%.2f, %.2f)'%(it[0], it[1]))
 				
+				# Binary search to find index in self.dic with value >= it[1]
+				low = self.bSearch(self.dic[att], it[0])
+				mid = self.bSearch(self.dic[att], it[1]) 
+				up = self.bSearch(self.dic[att], it[2])
+				if it[2] != Max:
+					up -= 1
+				newH += ([[nextLevel]] * (up-mid+1))
+				newH += ([[nextLevel]] * (mid-low)) # Interval oppened in right side
+
 				# Queue the next 2 subintervals
 				nextIntervals.append((it[1],(it[1]+it[2])//2,it[2]))
 				nextIntervals.append((it[0],(it[0]+it[1])//2,it[1]))
 
-				newH += ([[nextLevel-1]] * (it[1]-it[0]))
-				newH += ([[nextLevel]] * (it[2]-it[1]))
-				if it[2] == maxInterval:
-					newH += [[nextLevel]]
+				# newH += ([[nextLevel-1]] * (it[1]-it[0]))
+				# newH += ([[nextLevel]] * (it[2]-it[1]))
+				# if it[2] == maxInterval:
+				# 	newH += [[nextLevel]]
 
 				nextLevel -= 2
 
