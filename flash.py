@@ -67,6 +67,7 @@ def checkPath(path, heap, k, D, optimums, taggedNodes):
 	while low <= high:
 		mid = floor((low+high)/2)
 		node = path[mid]
+		
 		if checkAndTag(node, k, D, taggedNodes):
 			optimum = node
 			high = mid-1
@@ -74,8 +75,8 @@ def checkPath(path, heap, k, D, optimums, taggedNodes):
 			heappush(heap, node)
 			low = mid+1
 
-	# store(optimum)
-	optimums.append(optimum)
+	if optimum != None:
+		optimums.append(optimum)
 
 def flash(D, k):
 	"""
@@ -94,6 +95,7 @@ def flash(D, k):
 			if node not in taggedNodes:
 				path = findPath(node, D, taggedNodes)
 				checkPath(path, heap, k, D, optimums, taggedNodes)
+				
 				while len(heap) > 0:
 					node = heappop(heap)
 					for up in D.lat.sortedSuccessors(node):

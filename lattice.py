@@ -25,7 +25,6 @@ class Lattice:
 			return None
 		return i
 
-
 	def createNumericalHierarchies(self, att, h):
 		"""
 			Given an interval this function produces a taxonomy tree.
@@ -39,7 +38,6 @@ class Lattice:
 				dic: dict with the relationship between intervals and integers		
 		"""
 
-		dic = {}
 		Min, Max = self.dic[att][0], self.dic[att][-1] # Interval bounds
 		intervals = [(Min,(Min+Max)//2,Max)] # Initial interval: Entire range of values
 		nextLevel = len(self.dic[att])-1 + 2**(h-1) -2
@@ -61,19 +59,15 @@ class Lattice:
 				low = self.bSearch(self.dic[att], it[0])
 				mid = self.bSearch(self.dic[att], it[1]) 
 				up = self.bSearch(self.dic[att], it[2])
+
 				if it[2] != Max:
 					up -= 1
-				newH += ([[nextLevel]] * (up-mid+1))
-				newH += ([[nextLevel]] * (mid-low)) # Interval oppened in right side
-
+				newH = ([[nextLevel]] * (up-mid+1)) + newH
+				newH = ([[nextLevel-1]] * (mid-low)) + newH # Interval oppened in right side
+				
 				# Queue the next 2 subintervals
 				nextIntervals.append((it[1],(it[1]+it[2])//2,it[2]))
 				nextIntervals.append((it[0],(it[0]+it[1])//2,it[1]))
-
-				# newH += ([[nextLevel-1]] * (it[1]-it[0]))
-				# newH += ([[nextLevel]] * (it[2]-it[1]))
-				# if it[2] == maxInterval:
-				# 	newH += [[nextLevel]]
 
 				nextLevel -= 2
 

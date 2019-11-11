@@ -64,6 +64,26 @@ class Dataset:
 
 		self.oldLevels = levels[:]
 
+	def checkQID(self, setSize, k, bitMask):
+		# Select columns to make a groupby in the buffer
+		bitString = bin(bitMask)[2:]
+		bitString = ('0' * (self.n_qid-len(bitString))) + bitString
+
+		columns = []
+		for i in range(len(bitString)):
+			if bitString[i] == '1':
+				columns.append(i)
+		
+		# Check if there is at least k elements in the groupby of 'columns'
+		# If yes, the buffer is not k-anonymous
+		_, countElements = np.unique(self.buffer[:,columns], return_counts=True, axis=0)
+		for c in countElements:
+			# If the number of distinct elements of a group is < k, the data is not k-anonymous
+			if c < k:
+				return False
+
+		return True
+
 	def isKAnonymous(self, k, node):
 		"""
 			@Parameters:
@@ -84,22 +104,13 @@ class Dataset:
 			bitMask = bitMask | 1
 			limit = 1 << (self.n_qid-setSize)
 			while not (bitMask & limit):
-				# Select columns to make a groupby in the buffer
-				bitString = bin(bitMask)[2:]
-				columns = []
-				for i in range(len(bitString)):
-					if bitString[i] == '1':
-						columns.append(i)
-				
-				# Check if there is at least k elements in the groupby of 'columns'
-				# If yes, the buffer is not k-anonymous
-				_, countElements = np.unique(self.buffer[:,columns], return_counts=True, axis=0)
-				for c in countElements:
-					# If the number of distinct elements of a group is < k, the data is not k-anonymous
-					if c < k:
-						return False
+				if not self.checkQID(setSize, k, bitMask):
+					return False
 
 				bitMask = (bitMask ^ (1 << (n-1))) | (1 << n)
 				n += 1
+
+			if not self.checkQID(setSize, k, bitMask):
+				return False
 
 		return True
