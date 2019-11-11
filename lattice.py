@@ -11,31 +11,94 @@ class Lattice:
 		self.hier = []		  			# (list of np.array): Hierarchy matrices
 		self.distinct = []				# (numpy matrix): Position i,j is the number of distinct values of
 										#				  attribute i in the level of generalization j
-	def addNewHierarchy(self, att, values, newNames):
+	
+	def createNumericalHierarchies(minInterval, maxInterval, h):
+		"""
+			Given an interval this function produces a taxonomy tree.
+
+			@Parameters:
+				interval: list of numbers (column of Dataset.data)
+				h: Desired taxonomy tree height. h >= 2
+
+			@Return:
+				hierarchies: Matrix
+				dic: dict with the relationship between intervals and integers		
+		"""
+
+		dic = {}
+		intervals = [(minInterval,(minInterval+maxInterval)//2,maxInterval)] # Initial interval: Entire range of values
+		nextLevel = maxInterval + 2**(h-1) -2
+		dic = ['*']
+		hierarchies = np.array([[nextLevel+1]]*(maxInterval-minInterval+1))
+		for _ in np.arange(h-2):
+			newH, nextIntervals = [], []
+			while len(intervals) > 0:
+				it = intervals.pop(0) # Extract the first element
+				
+				# Add the new 2 levels in the dictionary
+				if it[2] == maxInterval:
+					dic.append('[%.2f, %.2f]'%(it[1], it[2]))
+				else:
+					dic.append('[%.2f, %.2f)'%(it[1], it[2]))
+				dic.append('[%.2f, %.2f)'%(it[0], it[1]))
+				
+				# Queue the next 2 subintervals
+				nextIntervals.append((it[1],(it[1]+it[2])//2,it[2]))
+				nextIntervals.append((it[0],(it[0]+it[1])//2,it[1]))
+
+				newH += ([[nextLevel-1]] * (it[1]-it[0]))
+				newH += ([[nextLevel]] * (it[2]-it[1]))
+				if it[2] == maxInterval:
+					newH += [[nextLevel]]
+
+				nextLevel -= 2
+
+			intervals = nextIntervals
+			hierarchies = np.c_[np.array(newH), hierarchies]
+
+		return hierarchies, dic[::-1]
+
+	def addNewHierarchy(self, att, values, newNames, numerical=False):
 		"""
 			Add a column in 'att' hierarchy matrix and the new hierarchy names in 
 			'att' dictionary.
 			
 			@Parameters
 				att (int): attribute's index.
-				values (dict): dictionary associating values from the current hierarchy level
-							   to the hierarchy level+1. Obs: The association is int to int.
+				values: if numerical=True, values must be a 2d matrix
+						if numerical=False, values must be a dictionary associating values 
+						from the current hierarchy level to the hierarchy level+1.
+						Obs: The association is int to int.
 				newNames (list): list of new names in the hierarchy.
+				numerical: Indicates if the attribute is numerical or not. If it is numerical,
+						   the function expects the entire hierarchy matrix (get from frunction
+						   'createNumericalHierarchies').
 		"""
 		
-		# Increase taxonomy tree height of attribute 'att'
-		self.hierarchies += 1
+		if numerical:
+			self.hierarchies[att] = values.shape[1]
 
-		# Update hierarchy matrix
-		f = np.vectorize(lambda x : values[x])
-		newColumn = f(self.hier[att][:,-1])
-		self.hier[att] = np.c_[self.hier[att], newColumn]
-		
+			# Append new columns to self.hier matrix
+			self.hier[att] = np.c_[self.hier[att], values]
+
+			# Add the number of distinct values in the new hierarchy
+			self.distinct[att]+= [2**i for i in range(self.hierarchies[att]-1,-1,-1)]
+		else:
+			# Increase taxonomy tree height of attribute 'att'
+			self.hierarchies[att] += 1
+
+			# Update hierarchy matrix
+			f = np.vectorize(lambda x : values[x])
+			newColumn = f(self.hier[att][:,-1])
+
+			# Append a new column to self.hier matrix
+			self.hier[att] = np.c_[self.hier[att], newColumn]
+
+			# Add the number of distinct values in the new hierarchy
+			self.distinct[att].append(len(newNames))
+
 		# Update dictionary
-		self.dic[att].append(newNames)
-
-		# Add the number of distinct values in the new hierarchy
-		self.distinct[att].append(len(newNames))
+		self.dic[att] += newNames
 
 	def sortedSuccessors(self, node):
 		"""
@@ -53,7 +116,7 @@ class Lattice:
 		for i in np.arange(len(node)):
 			if node[i] < self.hierarchies[i]:
 				node[i] += 1
-				nodes.append((nodeMetrics(node), tuple(node)))
+				nodes.append((self.nodeMetrics(node), tuple(node)))
 				node[i] -= 1
 		
 		nodes.sort()
@@ -81,7 +144,7 @@ class Lattice:
 		
 		return nodes
 
-	def predecessors(node):
+	def predecessors(self, node):
 		"""
 			Produces a list of predecessors of a node
 
@@ -118,7 +181,7 @@ class Lattice:
 					node[i] -= 1
 		
 		# Sort nodes according to metrics c1, c2 and c3
-		nodeM = [(nodeMetrics(node), node) for node in nextLevel]
+		nodeM = [(self.nodeMetrics(node), node) for node in nextLevel]
 		nodeM.sort()
 
 		return [t[1] for t in nodeM]

@@ -1,13 +1,15 @@
 import dataset
 import numpy as np
+from math import floor
+from heapq import heapify, heappop, heappush
 
-def findPath(D, node, taggedNodes):
+def findPath(node, D, taggedNodes):
 	"""
 		It produces a path of untagged nodes.
 		
 		@Parameters:
-			D: Dataset object
 			node: tuple of integers
+			D: Dataset object
 			taggedNodes: set of nodes
 			
 		@Return:
@@ -49,7 +51,7 @@ def checkAndTag(node, k, D, taggedNodes):
 
 	return anonymous
 	
-def checkPath(path, heap, k, D, optimums):
+def checkPath(path, heap, k, D, optimums, taggedNodes):
 	"""
 		@Parameters:
 			path: list of nodes
@@ -69,7 +71,7 @@ def checkPath(path, heap, k, D, optimums):
 			optimum = node
 			high = mid-1
 		else:
-			heapq.heappush(heap, node)
+			heappush(heap, node)
 			low = mid+1
 
 	# store(optimum)
@@ -90,14 +92,14 @@ def flash(D, k):
 	for l in np.arange(latticeHeight):
 		for node in currLevel:
 			if node not in taggedNodes:
-				path = findPath(D, node, taggedNodes)
-				checkPath(path, heap, k, D, optimums)
+				path = findPath(node, D, taggedNodes)
+				checkPath(path, heap, k, D, optimums, taggedNodes)
 				while len(heap) > 0:
-					node = heapq.heappop(heap)
+					node = heappop(heap)
 					for up in D.lat.sortedSuccessors(node):
 						if up not in taggedNodes:
-							path = D.lat.findPath(up)
-							checkPath(path, heap, k, D, optimums)
+							path = findPath(up, D, taggedNodes)
+							checkPath(path, heap, k, D, optimums, taggedNodes)
 		
 		currLevel = D.lat.nextLevel(currLevel)
 

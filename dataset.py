@@ -60,9 +60,9 @@ class Dataset:
 
 		for row in np.arange(self.buffer.shape[0]):
 			for col in indexes:
-				self.buffer[row][col] = self.lat.hier[col][data[row][col]][levels[col]]
+				self.buffer[row][col] = self.lat.hier[col][self.data[row][col]][levels[col]]
 
-		self.oldLevels = levels.copy()
+		self.oldLevels = levels[:]
 
 	def isKAnonymous(self, k, node):
 		"""
@@ -87,7 +87,7 @@ class Dataset:
 				# Select columns to make a groupby in the buffer
 				bitString = bin(bitMask)[2:]
 				columns = []
-				for i in len(bitString):
+				for i in range(len(bitString)):
 					if bitString[i] == '1':
 						columns.append(i)
 				
