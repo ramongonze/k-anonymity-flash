@@ -5,15 +5,16 @@ from heapq import heapify, heappop, heappush
 
 def findPath(node, D, taggedNodes):
 	"""
-		It produces a path of untagged nodes.
+		It produces a path of untagged nodes from a start node to the node at
+		the highest level of a lattice.
 		
 		@Parameters:
-			node: tuple of integers
-			D: Dataset object
-			taggedNodes: set of nodes
+			node: tuple of integers.
+			D: Dataset object.
+			taggedNodes: set of nodes.
 			
 		@Return:
-			path: list of nodes
+			path: list of tuple (nodes).
 	"""
 	
 	path = []
@@ -29,10 +30,14 @@ def findPath(node, D, taggedNodes):
 def checkAndTag(node, k, D, taggedNodes):
 	"""
 		@Parameters:
-			D: Dataset object
-			k: parameter of k-anonymity
-			node: tuple of integers
-			taggedNodes: set of tuples
+			D: Dataset object.
+			k: parameter of k-anonymity.
+			node: tuple of integers.
+			taggedNodes: set of tuples (nodes).
+
+		@Return:
+			True if 'node' is k-anonymous.
+			False if 'node' is not k-anonymous.
 	"""
 
 	anonymous = D.isKAnonymous(k, node)
@@ -54,10 +59,10 @@ def checkAndTag(node, k, D, taggedNodes):
 def checkPath(path, heap, k, D, optimums, taggedNodes):
 	"""
 		@Parameters:
-			path: list of nodes
-			heap: list of tuples
-			k: parameter of k-anonymity
-			D: Dataset object
+			path: list of tuples (nodes).
+			heap: list of tuples (nodes).
+			k: parameter of k-anonymity.
+			D: Dataset object.
 	"""
 
 	low = 0
@@ -80,9 +85,15 @@ def checkPath(path, heap, k, D, optimums, taggedNodes):
 
 def flash(D, k):
 	"""
+		Given a dataset D and a parameter k the Flash algorithm searches in the dataset
+		lattice and return a list of k-anonymous nodes.
+
 		@Parameters:
-			D: Dataset object
-			k: parameter of k-anonymity
+			D: Dataset object.
+			k: parameter of k-anonymity.
+
+		@Return:
+			List of tuples (nodes).
 	"""
 
 	optimums = []

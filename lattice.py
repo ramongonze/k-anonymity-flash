@@ -5,15 +5,28 @@ from heapq import heapify, heappop, heappush
 
 class Lattice:
 	def __init__(self, n_qid):
-		self.n_qid = n_qid	  			# (int): Number of QID
-		self.hierarchies = [0] * n_qid	# (list): List where position i containts the taxonomy tree hight of attribute i
-		self.dic = []		  			# (list of list): Dictionaries for hierarchies
-		self.hier = []		  			# (list of np.array): Hierarchy matrices
+		self.n_qid = n_qid	  			# (int): Number of quasi-identifiers.
+		self.hierarchies = [0] * n_qid	# (list of int): List where position i containts the taxonomy tree hight
+										#				 of QID i.
+		self.dic = []		  			# (list of list): Dictionaries for hierarchies.
+		self.hier = []		  			# (list of np.array): Hierarchy matrices.
 		self.distinct = []				# (numpy matrix): Position i,j is the number of distinct values of
-										#				  attribute i in the level of generalization j
+										#				  attribute i in the level of generalization j.
 	
-	# Binary search
 	def bSearch(self, arr, key):
+		"""
+			Binary search in a list of numbers. 
+			
+			@Parameters:
+				arr: sorted list of numbers.
+				key: number to be searched.
+
+			@Return:
+				Array index that contains the 'key' value.
+				If key < arr[0], it returns None.
+		"""
+
+		# Binary search
 		i, j = 0, len(arr)-1
 		while i <= j:
 			m = (i+j)//2
@@ -30,12 +43,12 @@ class Lattice:
 			Given an interval this function produces a taxonomy tree.
 
 			@Parameters:
-				att (int): Attribute index
-				h: Desired taxonomy tree height. h >= 2
+				att (int): QID column index of matrix dataset.
+				h: Desired taxonomy tree height. h >= 2.
 
 			@Return:
-				hierarchies: Matrix
-				dic: dict with the relationship between intervals and integers		
+				hierarchies: Matrix of integers.
+				dic (dict): Dictionary with the relationship between intervals and integers.
 		"""
 
 		Min, Max = self.dic[att][0], self.dic[att][-1] # Interval bounds
@@ -78,19 +91,19 @@ class Lattice:
 
 	def addNewHierarchy(self, att, values, newNames, numerical=False):
 		"""
-			Add a column in 'att' hierarchy matrix and the new hierarchy names in 
-			'att' dictionary.
+			Add a column in self.hierarchy[att] matrix and the new hierarchy names in 
+			self.dic[att].
 			
 			@Parameters
-				att (int): attribute's index.
-				values: if numerical=True, values must be a 2d matrix
-						if numerical=False, values must be a dictionary associating values 
-						from the current hierarchy level to the hierarchy level+1.
-						Obs: The association is int to int.
-				newNames (list): list of new names in the hierarchy.
-				numerical: Indicates if the attribute is numerical or not. If it is numerical,
-						   the function expects the entire hierarchy matrix (get from frunction
-						   'createNumericalHierarchies').
+				att (int): QID column index of matrix dataset.
+				values: If numerical=True, values must be a 2d matrix.
+						If numerical=False, values must be a dictionary associating values 
+						of the current hierarchy level to the hierarchy level+1.
+						Obs: Each key is a pair.
+ 				newNames (list): list of new names in the hierarchy.
+				numerical (bool): Indicates if 'att' is numerical or not. If numerical, the function
+								  expects the entire hierarchy matrix (get from frunction
+								  'createNumericalHierarchies').
 		"""
 		
 		if numerical:
@@ -123,10 +136,10 @@ class Lattice:
 			Produces a list of sorted (by metrics c1,c2 and c3) successors of a node.
 			
 			@Parameters:
-				node: tuple of integers
+				node: tuple of integers.
 				
 			@Return:
-				nodes: list of tuples
+				nodes: list of tuples.
 		"""
 		
 		nodes = []
@@ -146,10 +159,10 @@ class Lattice:
 			Produces a list of successors of a node.
 			
 			@Parameters:
-				node: tuple of integers
+				node: tuple of integers.
 				
 			@Return:
-				nodes: list of tuples
+				nodes: list of tuples.
 		"""
 		
 		nodes = []
@@ -164,10 +177,13 @@ class Lattice:
 
 	def predecessors(self, node):
 		"""
-			Produces a list of predecessors of a node
+			Produces a list of predecessors of a node.
 
 			@Parameters: 
-				node: tuple of integers
+				node: tuple of integers.
+
+			@Return:
+				nodes: list of tuples.
 		"""
 		nodes = []
 		node = list(node)
@@ -185,7 +201,10 @@ class Lattice:
 			that produces a set of nodes in the level L+1.
 			
 			@Parameters:
-				nodes: list of nodes in the current level
+				nodes: list of nodes in the current level.
+
+			@Return:
+				list of tuples (nodes).
 		"""
 		
 		nextLevel = set()
@@ -206,17 +225,17 @@ class Lattice:
 
 	def nodeMetrics(self, n):
 		"""
-			Calculates metrics to sort lattice nodes.
+			Calculate metrics for a node from a lattice.
 
-			c1(n): Node level
-			c2(n): Precision metric: Average generalization over all quasi-identifiers
-			c3(n): Average over the number of distinct values on the current level of a quasi-identifier
+			c1(n): Node level.
+			c2(n): Precision metric: Average generalization over all quasi-identifiers.
+			c3(n): Average over the number of distinct values on the current level of a quasi-identifier.
 
 			@Parameters:
-				n: tuple that represents a node in a lattice
+				n: tuple that represents a node in a lattice.
 			
 			@Return:
-				Tuple (c1, c2, c3)
+				Tuple (c1, c2, c3).
 		"""
 
 		c1 = sum(n) 
