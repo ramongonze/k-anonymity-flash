@@ -103,10 +103,10 @@ class Dataset:
 
 		return True
 
-	def generateNewDataset(self, node):
+	def generalizeDataset(self, node):
 		"""
 			Given a node from the lattice, replace the original values from 
-			the dataset by the respectively general values accordin to node.
+			the dataset by the respectively general values according to 'node'.
 
 			@Parameters:
 				node: tuple of integers
@@ -114,8 +114,8 @@ class Dataset:
 			@Return: Pandas DataFrame
 		"""
 
-		newDF = pd.DataFrame()
+		newDF = pd.DataFrame(columns=self.columnsNames.copy())
 		for i in np.arange(self.data.shape[0]):
-			newDF[i] = [self.lat.dic[att][self.lat.hier[att][self.data[i][att]][node[att]]] for att in np.arange(self.n_qid)]
+			newDF.loc[i] = [self.lat.dic[att][self.lat.hier[att][self.data[i][att]][node[att]]] for att in np.arange(self.n_qid)]
 
 		return newDF
