@@ -11,14 +11,15 @@ class Dataset:
 				df: Pandas DataFrame
 		"""
 
-		self.data = np.array([])                # (numpy matrix): Dataset with all values changed to integers.
-		self.n_qid = df.shape[1]                # (int): Number of quasi-identifiers.
-		self.lat = lattice.Lattice(self.n_qid)  # (Lattice object): Lattice graph
+		self.data = np.array([])                	# (numpy matrix): Dataset with all values changed to integers.
+		self.n_qid = df.shape[1]                	# (int): Number of quasi-identifiers.
+		self.lat = lattice.Lattice(self.n_qid)  	# (Lattice object): Lattice graph
 		self.__convertDFToInt(df)
-		self.buffer = self.data.copy()          # (numpy matrix): Buffer used to keep self.data changed to 
-												#				  different hierarchies.
-		self.oldLevels = [0] * self.n_qid       # (list of int): Current hierarchies levels of 'self.buffer'.
-	
+		self.buffer = self.data.copy()          	# (numpy matrix): Buffer used to keep self.data changed to 
+													#				  different hierarchies.
+		self.oldLevels = [0] * self.n_qid       	# (list of int): Current hierarchies levels of 'self.buffer'.
+		self.columnsNames = list(df.columns.copy())	# (list of strings): List of attribute names
+
 	def __convertDFToInt(self, df):
 		"""
 			Replace all values in the dataset by integers. It also creates a dictionary
@@ -101,3 +102,20 @@ class Dataset:
 				return False
 
 		return True
+
+	def generateNewDataset(self, node):
+		"""
+			Given a node from the lattice, replace the original values from 
+			the dataset by the respectively general values accordin to node.
+
+			@Parameters:
+				node: tuple of integers
+
+			@Return: Pandas DataFrame
+		"""
+
+		newDF = pd.DataFrame()
+		for i in np.arange(self.data.shape[0]):
+			newDF[i] = [self.lat.dic[att][self.lat.hier[att][self.data[i][att]][node[att]]] for att in np.arange(self.n_qid)]
+
+		return newDF
