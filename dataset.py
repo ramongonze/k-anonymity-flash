@@ -106,16 +106,22 @@ class Dataset:
 	def generalizeDataset(self, node):
 		"""
 			Given a node from the lattice, replace the original values from 
-			the dataset by the respectively general values according to 'node'.
+			the dataset by the respectively general values accordin to node.
 
 			@Parameters:
 				node: tuple of integers
 
 			@Return: Pandas DataFrame
 		"""
+		
+		newDF = pd.DataFrame()
+		genValue = lambda att,treeLevel,records : [self.lat.dic[att][self.lat.hier[att][oldInt][treeLevel]] for oldInt in records]
+		for att in np.arange(self.n_qid):
+			treeLevel = node[att]
+			attName = self.columnsNames[att]
+			records = self.data[:,att]
 
-		newDF = pd.DataFrame(columns=self.columnsNames.copy())
-		for i in np.arange(self.data.shape[0]):
-			newDF.loc[i] = [self.lat.dic[att][self.lat.hier[att][self.data[i][att]][node[att]]] for att in np.arange(self.n_qid)]
+			newDF[attName] = genValue(att, treeLevel, records)
 
+			
 		return newDF
